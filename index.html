@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MomVerse — A Love Written in Code</title>
+<style>
+* { box-sizing: border-box; }
+body { margin:0; font-family:'Poppins', sans-serif; background: radial-gradient(circle at top,#2a124f,#000); color:#fff; overflow-y:auto;}
+canvas { position: fixed; inset:0; z-index:-1;}
+#game { min-height:100vh; padding:60px 20px 200px; display:flex; flex-direction:column; align-items:center; text-align:center;}
+.panel { width:100%; max-width:900px; background:rgba(255,255,255,0.08); backdrop-filter:blur(18px); border-radius:30px; padding:50px; margin:40px 0; box-shadow:0 40px 90px rgba(0,0,0,0.55);}
+h1{font-size:2.8rem;margin-bottom:20px;}
+p{font-size:1.15rem;line-height:1.9;opacity:0;animation:fadeIn 2s forwards;}
+button{margin-top:40px;padding:18px 48px;font-size:1.1rem;border-radius:50px;border:none;cursor:pointer;background:linear-gradient(45deg,#ff4f9a,#ffd27d);color:#000;box-shadow:0 18px 45px rgba(0,0,0,0.4);}
+.progress{width:100%;max-width:520px;height:8px;background:rgba(255,255,255,0.2);border-radius:10px;overflow:hidden;margin:30px 0;}
+.progress span{display:block;height:100%;width:0%;background:linear-gradient(90deg,#ff5fa2,#ffd27d);transition:width 1s;}
+.orbs{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:24px;margin-top:40px;}
+.orb{height:130px;border-radius:50%;background:radial-gradient(circle at top,#ffe1f1,#ff5fa2);display:flex;align-items:center;justify-content:center;font-weight:bold;cursor:pointer;transition:transform 0.4s,opacity 0.4s;}
+.orb:hover{transform:scale(1.12);}
+.orb.used{opacity:0.4;pointer-events:none;}
+.gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:24px;margin-top:40px;}
+.gallery img{width:100%;border-radius:22px;opacity:0;transform:scale(0.9);animation:photoIn 1.4s forwards;box-shadow:0 25px 50px rgba(0,0,0,0.45);}
+.candles{display:flex;gap:18px;justify-content:center;margin-top:30px;}
+.candle{width:26px;height:70px;background:#fff;border-radius:6px;position:relative;cursor:pointer;}
+.flame{width:16px;height:22px;background:orange;border-radius:50%;position:absolute;top:-22px;left:50%;transform:translateX(-50%);}
+@keyframes fadeIn{to{opacity:1;}}
+@keyframes photoIn{to{opacity:1;transform:scale(1);}}
+</style>
+</head>
+<body>
+<canvas id="bg"></canvas>
+<div id="game">
+  <div class="progress"><span id="bar"></span></div>
+  <div id="scene"></div>
+</div>
+
+<audio id="voice" src="voice.mp3"></audio>
+<audio id="music" src="music.mp3" loop></audio>
+
+<script>
+// ===== STARFIELD =====
+const canvas=document.getElementById('bg'),ctx=canvas.getContext('2d');let stars=[];
+function resize(){canvas.width=innerWidth;canvas.height=innerHeight;}
+window.addEventListener('resize',resize);resize();
+for(let i=0;i<240;i++){stars.push({x:Math.random()*canvas.width,y:Math.random()*canvas.height,r:Math.random()*2,s:Math.random()*0.7+0.2});}
+function animateStars(){ctx.clearRect(0,0,canvas.width,canvas.height);ctx.fillStyle='white';stars.forEach(s=>{s.y+=s.s;if(s.y>canvas.height)s.y=0;ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fill();});requestAnimationFrame(animateStars);}
+animateStars();
+
+// ===== STATE =====
+const sceneEl=document.getElementById('scene'),bar=document.getElementById('bar');
+let state={scene:0,memories:0,candles:0};
+function save(){localStorage.setItem('momverse',JSON.stringify(state));}
+function scrollDown(){setTimeout(()=>{window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'});},300);}
+function progress(p){bar.style.width=p+'%';}
+
+// ===== RENDER =====
+function render(){
+  save();scrollDown();
+  const music=document.getElementById('music');
+  if(state.scene===0){
+    progress(10);
+    sceneEl.innerHTML=`<div class="panel"><h1>Happy Birthday, Mom 🌸</h1><p>This is not a card.<br>It is a universe I built — because love like yours deserves time, effort, and intention.</p><button onclick="startGame()">Enter the Universe</button></div>`;
+  }
+  if(state.scene===1){
+    progress(30);
+    sceneEl.innerHTML=`<div class="panel"><p>You were my first home.<br>My first safety.<br>My quiet strength when the world felt heavy.<br><br>Everything I am becoming started with you.</p><button onclick="next()">Continue</button></div>`;
+  }
+  if(state.scene===2){
+    progress(55);
+    sceneEl.innerHTML=`<div class="panel"><p>Touch each memory. They unlock moments of us.</p><div class="orbs">
+      <div class="orb ${state.memories>0?'used':''}" onclick="unlock()">Love</div>
+      <div class="orb ${state.memories>1?'used':''}" onclick="unlock()">Protection</div>
+      <div class="orb ${state.memories>2?'used':''}" onclick="unlock()">Belief</div>
+      <div class="orb ${state.memories>3?'used':''}" onclick="unlock()">Strength</div>
+      </div>
+      ${state.memories>0?`<div class="gallery">${Array.from({length:state.memories}).map((_,i)=>`<img src="memories/mom${i+1}.jpeg">`).join('')}</div>`:''}
+      ${state.memories>=4?'<button onclick="next()">Continue</button>':''}
+      </div>`;
+  }
+  if(state.scene===3){
+    progress(75);
+    sceneEl.innerHTML=`<div class="panel"><p>Make a wish.<br>Blow out the candles.</p><div class="candles">
+      ${Array.from({length:5}).map((_,i)=>`<div class="candle" onclick="blow(this)">${state.candles>i?'':'<div class="flame"></div>'}</div>`).join('')}
+      </div>
+      ${state.candles>=5?'<button onclick="next()">Final Message</button>':''}</div>`;
+  }
+  if(state.scene===4){
+    progress(100);
+    sceneEl.innerHTML=`<div class="panel"><h1>Forever 💫</h1><p>I may grow.<br>I may travel.<br>I may build worlds of my own.<br><br>But I will always carry you inside me.<br><br>Happy Birthday, Mom.<br>I love you endlessly.</p>
+    <button onclick="playVoice()">▶ Hear My Voice</button></div>`;
+  }
+}
+
+// ===== ACTIONS =====
+function startGame(){
+  const music=document.getElementById('music');
+  music.volume=0;
+  music.play().catch(e=>console.log("Autoplay blocked",e));
+  let vol=0;
+  const fadeIn=setInterval(()=>{vol+=0.02; music.volume=Math.min(vol,0.6); if(vol>=0.6)clearInterval(fadeIn);},100);
+  state.scene++; render();
+}
+
+function next(){state.scene++; render();}
+function unlock(){if(state.memories<4){state.memories++; render();}}
+function blow(el){const f=el.querySelector('.flame');if(f){f.remove(); state.candles++; render();}}
+function playVoice(){
+  const audio=document.getElementById('voice');
+  const music=document.getElementById('music');
+  // fade out music
+  let mVol=music.volume;
+  const fadeMusic=setInterval(()=>{mVol-=0.05; music.volume=Math.max(mVol,0); if(mVol<=0){clearInterval(fadeMusic); music.pause();}},200);
+  // fade in voice
+  audio.volume=0; audio.play();
+  let v=0;
+  const fadeVoice=setInterval(()=>{v+=0.05; audio.volume=Math.min(v,1); if(v>=1)clearInterval(fadeVoice);},200);
+}
+
+render();
+</script>
+</body>
+</html>
