@@ -82,8 +82,6 @@ If I continue working on it, I would:
 ## Author
 
 Nomcebo Mtshali  
-Second-year IT student  
-Belgium Campus ITversity  
 
 ---
 
