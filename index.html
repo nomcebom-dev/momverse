@@ -1,123 +1,501 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MomVerse — A Love Written in Code</title>
-<style>
-* { box-sizing: border-box; }
-body { margin:0; font-family:'Poppins', sans-serif; background: radial-gradient(circle at top,#2a124f,#000); color:#fff; overflow-y:auto;}
-canvas { position: fixed; inset:0; z-index:-1;}
-#game { min-height:100vh; padding:60px 20px 200px; display:flex; flex-direction:column; align-items:center; text-align:center;}
-.panel { width:100%; max-width:900px; background:rgba(255,255,255,0.08); backdrop-filter:blur(18px); border-radius:30px; padding:50px; margin:40px 0; box-shadow:0 40px 90px rgba(0,0,0,0.55);}
-h1{font-size:2.8rem;margin-bottom:20px;}
-p{font-size:1.15rem;line-height:1.9;opacity:0;animation:fadeIn 2s forwards;}
-button{margin-top:40px;padding:18px 48px;font-size:1.1rem;border-radius:50px;border:none;cursor:pointer;background:linear-gradient(45deg,#ff4f9a,#ffd27d);color:#000;box-shadow:0 18px 45px rgba(0,0,0,0.4);}
-.progress{width:100%;max-width:520px;height:8px;background:rgba(255,255,255,0.2);border-radius:10px;overflow:hidden;margin:30px 0;}
-.progress span{display:block;height:100%;width:0%;background:linear-gradient(90deg,#ff5fa2,#ffd27d);transition:width 1s;}
-.orbs{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:24px;margin-top:40px;}
-.orb{height:130px;border-radius:50%;background:radial-gradient(circle at top,#ffe1f1,#ff5fa2);display:flex;align-items:center;justify-content:center;font-weight:bold;cursor:pointer;transition:transform 0.4s,opacity 0.4s;}
-.orb:hover{transform:scale(1.12);}
-.orb.used{opacity:0.4;pointer-events:none;}
-.gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:24px;margin-top:40px;}
-.gallery img{width:100%;border-radius:22px;opacity:0;transform:scale(0.9);animation:photoIn 1.4s forwards;box-shadow:0 25px 50px rgba(0,0,0,0.45);}
-.candles{display:flex;gap:18px;justify-content:center;margin-top:30px;}
-.candle{width:26px;height:70px;background:#fff;border-radius:6px;position:relative;cursor:pointer;}
-.flame{width:16px;height:22px;background:orange;border-radius:50%;position:absolute;top:-22px;left:50%;transform:translateX(-50%);}
-@keyframes fadeIn{to{opacity:1;}}
-@keyframes photoIn{to{opacity:1;transform:scale(1);}}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MomVerse — A Love Written in Code</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+  <style>
+    /* basic reset */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: radial-gradient(circle at top, #2a124f, #000);
+      color: #fff;
+      overflow-y: auto;
+      min-height: 100vh;
+    }
+
+    /* starfield sits behind everything */
+    canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+    }
+
+    /* main wrapper */
+    #game {
+      min-height: 100vh;
+      padding: 60px 20px 200px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    /* progress bar at top */
+    .progress-bar {
+      width: 100%;
+      max-width: 520px;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 10px;
+      overflow: hidden;
+      margin: 30px 0;
+    }
+
+    .progress-bar span {
+      display: block;
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #ff5fa2, #ffd27d);
+      transition: width 1s;
+    }
+
+    /* each scene sits inside a panel */
+    .panel {
+      width: 100%;
+      max-width: 900px;
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(18px);
+      border-radius: 30px;
+      padding: 50px;
+      margin: 40px 0;
+      box-shadow: 0 40px 90px rgba(0, 0, 0, 0.55);
+    }
+
+    .panel h1 {
+      font-size: 2.8rem;
+      margin-bottom: 20px;
+    }
+
+    .panel p {
+      font-size: 1.15rem;
+      line-height: 1.9;
+      opacity: 0;
+      animation: fadeIn 2s forwards;
+    }
+
+    /* big pink button */
+    .panel button {
+      margin-top: 40px;
+      padding: 18px 48px;
+      font-size: 1.1rem;
+      border-radius: 50px;
+      border: none;
+      cursor: pointer;
+      background: linear-gradient(45deg, #ff4f9a, #ffd27d);
+      color: #000;
+      font-family: 'Poppins', sans-serif;
+      font-weight: 600;
+      box-shadow: 0 18px 45px rgba(0, 0, 0, 0.4);
+      transition: transform 0.2s;
+    }
+
+    .panel button:hover {
+      transform: scale(1.04);
+    }
+
+    /* memory orbs grid */
+    .orbs {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 24px;
+      margin-top: 40px;
+    }
+
+    .orb {
+      height: 130px;
+      border-radius: 50%;
+      background: radial-gradient(circle at top, #ffe1f1, #ff5fa2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      cursor: pointer;
+      transition: transform 0.4s, opacity 0.4s;
+      font-size: 0.95rem;
+    }
+
+    .orb:hover {
+      transform: scale(1.12);
+    }
+
+    /* orb greyed out once clicked */
+    .orb.used {
+      opacity: 0.4;
+      pointer-events: none;
+    }
+
+    /* photo gallery that appears as memories unlock */
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 24px;
+      margin-top: 40px;
+    }
+
+    .gallery img {
+      width: 100%;
+      border-radius: 22px;
+      opacity: 0;
+      transform: scale(0.9);
+      animation: photoIn 1.4s forwards;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.45);
+    }
+
+    /* candles row */
+    .candles {
+      display: flex;
+      gap: 18px;
+      justify-content: center;
+      margin-top: 30px;
+    }
+
+    .candle {
+      width: 26px;
+      height: 70px;
+      background: #fff;
+      border-radius: 6px;
+      position: relative;
+      cursor: pointer;
+    }
+
+    .flame {
+      width: 16px;
+      height: 22px;
+      background: orange;
+      border-radius: 50%;
+      position: absolute;
+      top: -22px;
+      left: 50%;
+      transform: translateX(-50%);
+      animation: flicker 0.6s ease-in-out infinite alternate;
+    }
+
+    @keyframes flicker {
+      from { transform: translateX(-50%) scaleY(1); }
+      to   { transform: translateX(-50%) scaleY(0.85) scaleX(1.1); }
+    }
+
+    @keyframes fadeIn {
+      to { opacity: 1; }
+    }
+
+    @keyframes photoIn {
+      to { opacity: 1; transform: scale(1); }
+    }
+  </style>
 </head>
 <body>
-<canvas id="bg"></canvas>
-<div id="game">
-  <div class="progress"><span id="bar"></span></div>
-  <div id="scene"></div>
-</div>
 
-<audio id="voice" src="voice.mp3"></audio>
-<audio id="music" src="music.mp3" loop></audio>
+  <!-- starfield canvas -->
+  <canvas id="bg"></canvas>
 
-<script>
-// ===== STARFIELD =====
-const canvas=document.getElementById('bg'),ctx=canvas.getContext('2d');let stars=[];
-function resize(){canvas.width=innerWidth;canvas.height=innerHeight;}
-window.addEventListener('resize',resize);resize();
-for(let i=0;i<240;i++){stars.push({x:Math.random()*canvas.width,y:Math.random()*canvas.height,r:Math.random()*2,s:Math.random()*0.7+0.2});}
-function animateStars(){ctx.clearRect(0,0,canvas.width,canvas.height);ctx.fillStyle='white';stars.forEach(s=>{s.y+=s.s;if(s.y>canvas.height)s.y=0;ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fill();});requestAnimationFrame(animateStars);}
-animateStars();
+  <div id="game">
+    <div class="progress-bar">
+      <span id="bar"></span>
+    </div>
+    <!-- scenes get injected here by JS -->
+    <div id="scene"></div>
+  </div>
 
-// ===== STATE =====
-const sceneEl=document.getElementById('scene'),bar=document.getElementById('bar');
-let state={scene:0,memories:0,candles:0};
-function save(){localStorage.setItem('momverse',JSON.stringify(state));}
-function scrollDown(){setTimeout(()=>{window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'});},300);}
-function progress(p){bar.style.width=p+'%';}
+  <!-- audio files need to be in the same folder -->
+  <audio id="voice" src="voice.mp3"></audio>
+  <audio id="music" src="music.mp3" loop></audio>
 
-// ===== RENDER =====
-function render(){
-  save();scrollDown();
-  const music=document.getElementById('music');
-  if(state.scene===0){
-    progress(10);
-    sceneEl.innerHTML=`<div class="panel"><h1>Happy Birthday, Mom 🌸</h1><p>This is not a card.<br>It is a universe I built — because love like yours deserves time, effort, and intention.</p><button onclick="startGame()">Enter the Universe</button></div>`;
-  }
-  if(state.scene===1){
-    progress(30);
-    sceneEl.innerHTML=`<div class="panel"><p>You were my first home.<br>My first safety.<br>My quiet strength when the world felt heavy.<br><br>Everything I am becoming started with you.</p><button onclick="next()">Continue</button></div>`;
-  }
-  if(state.scene===2){
-    progress(55);
-    sceneEl.innerHTML=`<div class="panel"><p>Touch each memory. They unlock moments of us.</p><div class="orbs">
-      <div class="orb ${state.memories>0?'used':''}" onclick="unlock()">Love</div>
-      <div class="orb ${state.memories>1?'used':''}" onclick="unlock()">Protection</div>
-      <div class="orb ${state.memories>2?'used':''}" onclick="unlock()">Belief</div>
-      <div class="orb ${state.memories>3?'used':''}" onclick="unlock()">Strength</div>
-      </div>
-      ${state.memories>0?`<div class="gallery">${Array.from({length:state.memories}).map((_,i)=>`<img src="memories/mom${i+1}.jpeg">`).join('')}</div>`:''}
-      ${state.memories>=4?'<button onclick="next()">Continue</button>':''}
-      </div>`;
-  }
-  if(state.scene===3){
-    progress(75);
-    sceneEl.innerHTML=`<div class="panel"><p>Make a wish.<br>Blow out the candles.</p><div class="candles">
-      ${Array.from({length:5}).map((_,i)=>`<div class="candle" onclick="blow(this)">${state.candles>i?'':'<div class="flame"></div>'}</div>`).join('')}
-      </div>
-      ${state.candles>=5?'<button onclick="next()">Final Message</button>':''}</div>`;
-  }
-  if(state.scene===4){
-    progress(100);
-    sceneEl.innerHTML=`<div class="panel"><h1>Forever 💫</h1><p>I may grow.<br>I may travel.<br>I may build worlds of my own.<br><br>But I will always carry you inside me.<br><br>Happy Birthday, Mom.<br>I love you endlessly.</p>
-    <button onclick="playVoice()">▶ Hear My Voice</button></div>`;
-  }
-}
+  <script>
+    // ----- starfield -----
 
-// ===== ACTIONS =====
-function startGame(){
-  const music=document.getElementById('music');
-  music.volume=0;
-  music.play().catch(e=>console.log("Autoplay blocked",e));
-  let vol=0;
-  const fadeIn=setInterval(()=>{vol+=0.02; music.volume=Math.min(vol,0.6); if(vol>=0.6)clearInterval(fadeIn);},100);
-  state.scene++; render();
-}
+    const canvas = document.getElementById("bg");
+    const ctx = canvas.getContext("2d");
 
-function next(){state.scene++; render();}
-function unlock(){if(state.memories<4){state.memories++; render();}}
-function blow(el){const f=el.querySelector('.flame');if(f){f.remove(); state.candles++; render();}}
-function playVoice(){
-  const audio=document.getElementById('voice');
-  const music=document.getElementById('music');
-  // fade out music
-  let mVol=music.volume;
-  const fadeMusic=setInterval(()=>{mVol-=0.05; music.volume=Math.max(mVol,0); if(mVol<=0){clearInterval(fadeMusic); music.pause();}},200);
-  // fade in voice
-  audio.volume=0; audio.play();
-  let v=0;
-  const fadeVoice=setInterval(()=>{v+=0.05; audio.volume=Math.min(v,1); if(v>=1)clearInterval(fadeVoice);},200);
-}
+    let stars = [];
 
-render();
-</script>
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+
+    function createStars() {
+      stars = [];
+      for (let i = 0; i < 240; i++) {
+        stars.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          r: Math.random() * 2,
+          speed: Math.random() * 0.7 + 0.2
+        });
+      }
+    }
+
+    function animateStars() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "white";
+
+      for (let i = 0; i < stars.length; i++) {
+        let s = stars[i];
+        s.y += s.speed;
+        // loop back to top when star goes off screen
+        if (s.y > canvas.height) {
+          s.y = 0;
+        }
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      requestAnimationFrame(animateStars);
+    }
+
+    window.addEventListener("resize", function() {
+      resizeCanvas();
+      createStars();
+    });
+
+    resizeCanvas();
+    createStars();
+    animateStars();
+
+
+    // ----- game state -----
+    // tracks which scene we're on and what the user has done
+
+    let currentScene = 0;
+    let memoriesUnlocked = 0;
+    let candlesBlown = 0;
+
+    // load saved progress if they've visited before
+    let saved = localStorage.getItem("momverse");
+    if (saved) {
+      let data = JSON.parse(saved);
+      currentScene = data.scene || 0;
+      memoriesUnlocked = data.memories || 0;
+      candlesBlown = data.candles || 0;
+    }
+
+    function saveProgress() {
+      localStorage.setItem("momverse", JSON.stringify({
+        scene: currentScene,
+        memories: memoriesUnlocked,
+        candles: candlesBlown
+      }));
+    }
+
+    function setProgress(percent) {
+      document.getElementById("bar").style.width = percent + "%";
+    }
+
+    // scroll to bottom so new content is visible
+    function scrollToBottom() {
+      setTimeout(function() {
+        window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+      }, 300);
+    }
+
+
+    // ----- scenes -----
+    // each scene builds its HTML and drops it into #scene
+
+    function showScene() {
+      saveProgress();
+      scrollToBottom();
+
+      let sceneEl = document.getElementById("scene");
+      let music = document.getElementById("music");
+
+      // SCENE 0 - landing / intro
+      if (currentScene === 0) {
+        setProgress(10);
+        sceneEl.innerHTML = `
+          <div class="panel">
+            <h1>Happy Birthday, Mom 🌸</h1>
+            <p>This is not a card.<br>
+               It is a universe I built — because love like yours deserves time, effort, and intention.</p>
+            <button onclick="startExperience()">Enter the Universe</button>
+          </div>
+        `;
+      }
+
+      // SCENE 1 - first message
+      if (currentScene === 1) {
+        setProgress(30);
+        sceneEl.innerHTML = `
+          <div class="panel">
+            <p>You were my first home.<br>
+               My first safety.<br>
+               My quiet strength when the world felt heavy.<br><br>
+               Everything I am becoming started with you.</p>
+            <button onclick="goNext()">Continue</button>
+          </div>
+        `;
+      }
+
+      // SCENE 2 - memory orbs
+      if (currentScene === 2) {
+        setProgress(55);
+
+        // build the orbs - used ones are greyed out
+        let orbsHTML = `
+          <div class="orbs">
+            <div class="orb ${memoriesUnlocked > 0 ? 'used' : ''}" onclick="unlockMemory()">Love</div>
+            <div class="orb ${memoriesUnlocked > 1 ? 'used' : ''}" onclick="unlockMemory()">Protection</div>
+            <div class="orb ${memoriesUnlocked > 2 ? 'used' : ''}" onclick="unlockMemory()">Belief</div>
+            <div class="orb ${memoriesUnlocked > 3 ? 'used' : ''}" onclick="unlockMemory()">Strength</div>
+          </div>
+        `;
+
+        // build photo gallery based on how many memories unlocked
+        let galleryHTML = "";
+        if (memoriesUnlocked > 0) {
+          let photos = "";
+          for (let i = 0; i < memoriesUnlocked; i++) {
+            photos += `<img src="memories/mom${i + 1}.jpeg" alt="Memory ${i + 1}">`;
+          }
+          galleryHTML = `<div class="gallery">${photos}</div>`;
+        }
+
+        // only show continue button once all 4 are unlocked
+        let continueBtn = memoriesUnlocked >= 4 ? `<button onclick="goNext()">Continue</button>` : "";
+
+        sceneEl.innerHTML = `
+          <div class="panel">
+            <p>Touch each memory. They unlock moments of us.</p>
+            ${orbsHTML}
+            ${galleryHTML}
+            ${continueBtn}
+          </div>
+        `;
+      }
+
+      // SCENE 3 - candles
+      if (currentScene === 3) {
+        setProgress(75);
+
+        // build 5 candles, already-blown ones have no flame
+        let candlesHTML = "";
+        for (let i = 0; i < 5; i++) {
+          let flame = candlesBlown > i ? "" : `<div class="flame"></div>`;
+          candlesHTML += `<div class="candle" onclick="blowCandle(this)">${flame}</div>`;
+        }
+
+        let continueBtn = candlesBlown >= 5 ? `<button onclick="goNext()">Final Message</button>` : "";
+
+        sceneEl.innerHTML = `
+          <div class="panel">
+            <p>Make a wish.<br>Blow out the candles.</p>
+            <div class="candles">${candlesHTML}</div>
+            ${continueBtn}
+          </div>
+        `;
+      }
+
+      // SCENE 4 - final message
+      if (currentScene === 4) {
+        setProgress(100);
+        sceneEl.innerHTML = `
+          <div class="panel">
+            <h1>Forever 💫</h1>
+            <p>I may grow.<br>
+               I may travel.<br>
+               I may build worlds of my own.<br><br>
+               But I will always carry you inside me.<br><br>
+               Happy Birthday, Mom.<br>
+               I love you endlessly.</p>
+            <button onclick="playVoiceMessage()">▶ Hear My Voice</button>
+          </div>
+        `;
+      }
+    }
+
+
+    // ----- actions -----
+
+    function startExperience() {
+      let music = document.getElementById("music");
+      music.volume = 0;
+
+      // try to play - browsers block autoplay without user gesture
+      music.play().catch(function(err) {
+        console.log("autoplay blocked, that's fine");
+      });
+
+      // fade music in slowly
+      let vol = 0;
+      let fadeIn = setInterval(function() {
+        vol += 0.02;
+        music.volume = Math.min(vol, 0.6);
+        if (vol >= 0.6) {
+          clearInterval(fadeIn);
+        }
+      }, 100);
+
+      currentScene++;
+      showScene();
+    }
+
+    function goNext() {
+      currentScene++;
+      showScene();
+    }
+
+    function unlockMemory() {
+      if (memoriesUnlocked < 4) {
+        memoriesUnlocked++;
+        showScene();
+      }
+    }
+
+    function blowCandle(candleEl) {
+      let flame = candleEl.querySelector(".flame");
+      if (flame) {
+        flame.remove();
+        candlesBlown++;
+        showScene();
+      }
+    }
+
+    function playVoiceMessage() {
+      let voice = document.getElementById("voice");
+      let music = document.getElementById("music");
+
+      // fade music out first
+      let mVol = music.volume;
+      let fadeOut = setInterval(function() {
+        mVol -= 0.05;
+        music.volume = Math.max(mVol, 0);
+        if (mVol <= 0) {
+          clearInterval(fadeOut);
+          music.pause();
+        }
+      }, 200);
+
+      // then fade voice message in
+      voice.volume = 0;
+      voice.play();
+      let v = 0;
+      let fadeVoice = setInterval(function() {
+        v += 0.05;
+        voice.volume = Math.min(v, 1);
+        if (v >= 1) {
+          clearInterval(fadeVoice);
+        }
+      }, 200);
+    }
+
+
+    // show the current scene on page load
+    showScene();
+  </script>
 </body>
+</html>
+
 </html>
